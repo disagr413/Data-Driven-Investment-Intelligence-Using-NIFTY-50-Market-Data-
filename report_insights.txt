@@ -1,0 +1,21 @@
+
+===================================================
+   CULT OPEN PROJECTS 2026 - EXECUTIVE SUMMARY
+===================================================
+
+[ KEY FINDINGS ]
+• Highest-Return Opportunity: NESTLEIND (Expected Return: 15.10%)
+• Lowest-Risk Stock (Safest): INFY (Forecasted Vol: 0.18%)
+• Sector Leader: Consumer Goods
+
+[ PORTFOLIO HIGHLIGHTS ]
+• The Balanced Portfolio achieved a maximum Sharpe ratio of 0.98.
+• In a severe market crash (-30%), the Conservative Portfolio limits drawdown to approximately -14.66%.
+
+[ RISK & ANOMALIES ]
+• Total Machine Learning anomalies detected in current market: 3
+• Volatility is continuously monitored using EWMA forecasting arrays.
+
+AI Generated Explanation Example:
+NESTLEIND is rated Strong Buy because: Expected Return = 15.10%; Sharpe Ratio = 0.57; Volatility is forecasted to remain below market average; Strong confidence backed by AI predictive momentum.
+===================================================
