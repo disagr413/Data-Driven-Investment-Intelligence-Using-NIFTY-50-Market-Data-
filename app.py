@@ -14,12 +14,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for a premium look
+# Removed strict CSS backgrounds so it works flawlessly in BOTH Light and Dark themes natively!
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    h1, h2, h3 { color: #1e3d59; }
-    .stMetric { background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    /* Minimal styling that adapts to any theme */
+    h1, h2, h3 { font-weight: 600; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -28,7 +27,6 @@ st.markdown("""
 # ==========================================
 @st.cache_data
 def load_data():
-    # Safely load all outputs from previous notebooks
     data = {}
     try:
         data['invest'] = pd.read_csv('investment_recommendations.csv')
@@ -41,13 +39,13 @@ def load_data():
         data['stress'] = pd.read_csv('stress_test_results.csv')
         data['exec'] = pd.read_csv('executive_summary.csv')
     except Exception as e:
-        st.sidebar.error(f"Data loading error: Ensure all CSVs from Notebooks 4 & 5 are in the directory. ({e})")
+        st.sidebar.error(f"Data loading error: {e}")
     return data
 
 data = load_data()
 
-# Check if data loaded successfully before rendering
 if not data:
+    st.error("Please ensure all CSV files are present in the directory.")
     st.stop()
 
 df_invest = data['invest']
@@ -57,7 +55,6 @@ df_allocations = data['allocations']
 # ==========================================
 # 3. SIDEBAR NAVIGATION
 # ==========================================
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2635/2635293.png", width=100)
 st.sidebar.title("Cult Quant 2026")
 st.sidebar.markdown("---")
 
@@ -73,73 +70,59 @@ page = st.sidebar.radio("Navigate Dashboard", [
 ])
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Built for Cult Open Projects 2026")
 
 # ==========================================
 # 4. PAGES RENDERING
 # ==========================================
 
-# ----------------- PAGE 1: OVERVIEW -----------------
 if page == "1. Overview":
     st.title("🌐 Market Overview")
-    st.markdown("High-level summary of the market and top AI-driven opportunities.")
     
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Stocks Analyzed", len(df_forecast))
-    col2.metric("Strong Buy Signals", len(df_forecast[df_forecast['Final_Recommendation'] == 'Strong Buy']))
+    col2.metric("Strong Buy Signals", len(df_forecast[df_forecast['Final_Recommendation'] == 'Strong Buy']) if 'Final_Recommendation' in df_forecast else 0)
     col3.metric("Anomalies Detected", len(data['anomalies']))
-    col4.metric("Avg Market Expected Return", f"{df_forecast['Expected_Return'].mean():.2f}%")
+    col4.metric("Avg Market Expected Return", f"{df_forecast['Expected_Return'].mean():.2f}%" if not df_forecast.empty else "N/A")
     
     st.markdown("### Top Opportunities (Future Score)")
-    top_opps = data['exec'].head(10)
-    fig = px.bar(top_opps, x='Symbol', y='Future_Score', color='Expected_Return',
-                 color_continuous_scale='Viridis', text='Final_Recommendation',
-                 title="Top 10 Stocks by AI Future Score")
-    fig.update_layout(xaxis_title="Stock Symbol", yaxis_title="Future Score (Out of 100)")
-    st.plotly_chart(fig, use_container_width=True)
+    if not data['exec'].empty:
+        top_opps = data['exec'].head(10)
+        fig = px.bar(top_opps, x='Symbol', y='Future_Score', color='Expected_Return',
+                     color_continuous_scale='Viridis', text='Final_Recommendation')
+        st.plotly_chart(fig, use_container_width=True)
 
-# ----------------- PAGE 2: STOCK EXPLORER -----------------
 elif page == "2. Stock Explorer":
     st.title("🔎 Stock Explorer")
-    st.markdown("Deep dive into individual stock metrics, AI predictions, and explainability.")
     
-    selected_stock = st.selectbox("Select a Stock Symbol", df_forecast['Symbol'].sort_values())
-    stock_data = df_forecast[df_forecast['Symbol'] == selected_stock].iloc[0]
-    
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.markdown("### Recommendation")
-        color = "green" if "Buy" in stock_data['Final_Recommendation'] else "red" if "Sell" in stock_data['Final_Recommendation'] else "orange"
-        st.markdown(f"<h2 style='color:{color}; text-align:center;'>{stock_data['Final_Recommendation']}</h2>", unsafe_allow_html=True)
+    if not df_forecast.empty:
+        selected_stock = st.selectbox("Select a Stock Symbol", df_forecast['Symbol'].sort_values())
+        stock_data = df_forecast[df_forecast['Symbol'] == selected_stock].iloc[0]
         
-        fig_gauge = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=stock_data['Future_Score'],
-            title={'text': "AI Future Score"},
-            gauge={'axis': {'range': [None, 100]},
-                   'bar': {'color': "#1e3d59"},
-                   'steps': [
-                       {'range': [0, 40], 'color': "lightcoral"},
-                       {'range': [40, 70], 'color': "khaki"},
-                       {'range': [70, 100], 'color': "lightgreen"}]}
-        ))
-        st.plotly_chart(fig_gauge, use_container_width=True)
-        
-    with col2:
-        st.markdown("### AI Explainability")
-        st.info(stock_data.get('AI_Explainability', 'Explanation not available.'))
-        
-        st.markdown("### Core Metrics")
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Expected Return", f"{stock_data['Expected_Return']:.2f}%")
-        m2.metric("Forecast Volatility", f"{stock_data['Forecast_Volatility']:.2f}%")
-        m3.metric("Sharpe Ratio", f"{stock_data['Sharpe']:.2f}")
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.markdown("### Recommendation")
+            st.markdown(f"<h2 style='text-align:center;'>{stock_data.get('Final_Recommendation', 'N/A')}</h2>", unsafe_allow_html=True)
+            
+            fig_gauge = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=stock_data.get('Future_Score', 50),
+                title={'text': "AI Future Score"},
+                gauge={'axis': {'range': [None, 100]},
+                       'bar': {'color': "rgba(30,144,255,0.8)"}}
+            ))
+            st.plotly_chart(fig_gauge, use_container_width=True)
+            
+        with col2:
+            st.markdown("### AI Explainability")
+            st.info(stock_data.get('AI_Explainability', 'Explanation not available.'))
+            
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Expected Return", f"{stock_data.get('Expected_Return', 0):.2f}%")
+            m2.metric("Forecast Volatility", f"{stock_data.get('Forecast_Volatility', 0):.2f}%")
+            m3.metric("Sharpe Ratio", f"{stock_data.get('Sharpe', 0):.2f}")
 
-# ----------------- PAGE 3: PORTFOLIO BUILDER -----------------
 elif page == "3. Portfolio Builder":
     st.title("💼 Portfolio Builder")
-    st.markdown("Optimized allocations based on Modern Portfolio Theory and Monte Carlo Simulation.")
     
     st.markdown("### Portfolio Risk-Return Profiles")
     st.dataframe(data['risk_sum'], use_container_width=True)
@@ -147,128 +130,110 @@ elif page == "3. Portfolio Builder":
     st.markdown("### Target Allocations")
     tabs = st.tabs(["Conservative (Min Vol)", "Balanced (Max Sharpe)", "Aggressive (Max Return)"])
     
-    # Helper to plot donut charts cleanly
     def plot_donut(col_name, title):
+        if col_name not in df_allocations.columns:
+            return None
         df_pie = df_allocations[['Symbol', col_name]].dropna()
-        df_pie = df_pie[df_pie[col_name] > 0.01] # Filter > 1%
-        fig = px.pie(df_pie, values=col_name, names='Symbol', hole=0.4, title=title, color_discrete_sequence=px.colors.qualitative.Pastel)
+        # Convert to numeric safely
+        df_pie[col_name] = pd.to_numeric(df_pie[col_name], errors='coerce').fillna(0)
+        df_pie = df_pie[df_pie[col_name] > 0.01] 
+        
+        if df_pie.empty: # FIX: Prevents crash if dataframe is empty
+            return None
+            
+        fig = px.pie(df_pie, values=col_name, names='Symbol', hole=0.4, title=title)
         fig.update_traces(textposition='inside', textinfo='percent+label')
         return fig
 
     with tabs[0]:
-        if 'Conservative_Wt' in df_allocations.columns:
-            st.plotly_chart(plot_donut('Conservative_Wt', "Conservative Portfolio"), use_container_width=True)
+        fig = plot_donut('Conservative_Wt', "Conservative Portfolio")
+        if fig: st.plotly_chart(fig, use_container_width=True)
+        else: st.info("Allocations too small to plot.")
+            
     with tabs[1]:
-        if 'Balanced_Wt' in df_allocations.columns:
-            st.plotly_chart(plot_donut('Balanced_Wt', "Balanced Portfolio"), use_container_width=True)
+        fig = plot_donut('Balanced_Wt', "Balanced Portfolio")
+        if fig: st.plotly_chart(fig, use_container_width=True)
+        else: st.info("Allocations too small to plot.")
+            
     with tabs[2]:
-        if 'Aggressive_Wt' in df_allocations.columns:
-            st.plotly_chart(plot_donut('Aggressive_Wt', "Aggressive Portfolio"), use_container_width=True)
+        fig = plot_donut('Aggressive_Wt', "Aggressive Portfolio")
+        if fig: st.plotly_chart(fig, use_container_width=True)
+        else: st.info("Allocations too small to plot.")
 
-# ----------------- PAGE 4: RISK DASHBOARD -----------------
 elif page == "4. Risk Dashboard":
     st.title("⚠️ Risk Dashboard")
-    st.markdown("Evaluate portfolio resilience, Drawdowns, and Tail Risk (VaR/CVaR).")
     
     st.markdown("### Efficient Frontier")
-    df_ef = data['frontier']
-    fig_ef = px.scatter(df_ef, x='Volatility', y='Return', color='Sharpe', 
-                        title="Monte Carlo Efficient Frontier (10,000 Portfolios)",
-                        color_continuous_scale='YlOrRd')
-    st.plotly_chart(fig_ef, use_container_width=True)
+    if not data['frontier'].empty:
+        fig_ef = px.scatter(data['frontier'], x='Volatility', y='Return', color='Sharpe', color_continuous_scale='YlOrRd')
+        st.plotly_chart(fig_ef, use_container_width=True)
     
     st.markdown("### Stress Testing (Market Crashes)")
-    df_stress = data['stress']
-    st.dataframe(df_stress, use_container_width=True)
+    st.dataframe(data['stress'], use_container_width=True)
     
     st.markdown("### Max Drawdown by Sector (Top 15 Stocks)")
-    df_dd = df_invest.nsmallest(15, 'Max_Drawdown') if 'Max_Drawdown' in df_invest.columns else df_invest.head(15)
-    if 'Max_Drawdown' in df_dd.columns:
-        fig_dd = px.bar(df_dd, x='Symbol', y='Max_Drawdown', color='Recommendation',
-                        title="Maximum Historical Drawdown (%)", color_discrete_map={"BUY": "green", "HOLD": "orange", "SELL": "red"})
-        st.plotly_chart(fig_dd, use_container_width=True)
+    if 'Max_Drawdown' in df_invest.columns:
+        # FIX: Safe numeric conversion before plotting
+        df_invest['Max_Drawdown'] = pd.to_numeric(df_invest['Max_Drawdown'], errors='coerce')
+        df_dd = df_invest.dropna(subset=['Max_Drawdown']).nsmallest(15, 'Max_Drawdown')
+        if not df_dd.empty:
+            fig_dd = px.bar(df_dd, x='Symbol', y='Max_Drawdown', color='Recommendation')
+            st.plotly_chart(fig_dd, use_container_width=True)
 
-# ----------------- PAGE 5: FORECAST DASHBOARD -----------------
 elif page == "5. Forecast Dashboard":
     st.title("🔮 Forecast Dashboard")
-    st.markdown("Future outlook based on LightGBM/XGBoost returns and EWMA Volatility.")
     
-    st.markdown("### Risk vs. Expected Return Map")
-    fig_scatter = px.scatter(df_forecast, x='Forecast_Volatility', y='Expected_Return', 
-                             color='Final_Recommendation', hover_data=['Symbol', 'Future_Score'],
-                             title="Opportunity Landscape (Higher Return, Lower Volatility is better)")
-    st.plotly_chart(fig_scatter, use_container_width=True)
+    if not df_forecast.empty:
+        fig_scatter = px.scatter(df_forecast, x='Forecast_Volatility', y='Expected_Return', 
+                                 color='Final_Recommendation', hover_data=['Symbol'])
+        st.plotly_chart(fig_scatter, use_container_width=True)
     
     st.markdown("### Sector Outlook")
-    st.dataframe(data['sector'].style.background_gradient(cmap='Blues', subset=['Expected_Return']), use_container_width=True)
+    st.dataframe(data['sector'], use_container_width=True)
 
-# ----------------- PAGE 6: ANOMALY DASHBOARD -----------------
 elif page == "6. Anomaly Dashboard":
     st.title("🚨 Anomaly Dashboard")
-    st.markdown("Detection of extreme events using Isolation Forests and Statistical Z-Scores.")
     
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("### Cross-Sectional Anomalies (Isolation Forest)")
+        st.markdown("### Cross-Sectional Anomalies")
         anomalies_if = df_forecast[df_forecast.get('Anomaly_Flag', '') == 'Anomaly']
-        if anomalies_if.empty:
-            st.success("No cross-sectional anomalies detected in the current snapshot.")
-        else:
-            st.dataframe(anomalies_if[['Symbol', 'Expected_Return', 'Forecast_Volatility']], use_container_width=True)
+        if anomalies_if.empty: st.success("No anomalies currently.")
+        else: st.dataframe(anomalies_if[['Symbol', 'Expected_Return']], use_container_width=True)
             
     with col2:
-        st.markdown("### Historical Extreme Return Events")
-        df_anom = data['anomalies']
-        st.dataframe(df_anom.tail(15), use_container_width=True) # Showing latest
+        st.markdown("### Historical Extreme Events")
+        df_anom = data['anomalies'].copy()
+        st.dataframe(df_anom.tail(15), use_container_width=True)
         
     st.markdown("### Anomaly Frequency Timeline")
-    if 'Date' in data['anomalies'].columns:
-        df_anom['Date'] = pd.to_datetime(df_anom['Date'])
-        timeline = df_anom.groupby(df_anom['Date'].dt.to_period('M')).size().reset_index(name='Count')
-        timeline['Date'] = timeline['Date'].astype(str)
-        fig_line = px.line(timeline, x='Date', y='Count', title="Extreme Events Over Time", markers=True)
-        st.plotly_chart(fig_line, use_container_width=True)
+    # FIX: Safe Date Parsing for timeline
+    if 'Date' in df_anom.columns and not df_anom.empty:
+        df_anom['Date'] = pd.to_datetime(df_anom['Date'], errors='coerce')
+        df_anom = df_anom.dropna(subset=['Date'])
+        if not df_anom.empty:
+            timeline = df_anom.groupby(df_anom['Date'].dt.to_period('M')).size().reset_index(name='Count')
+            timeline['Date'] = timeline['Date'].astype(str)
+            fig_line = px.line(timeline, x='Date', y='Count', markers=True)
+            st.plotly_chart(fig_line, use_container_width=True)
+        else:
+            st.info("Not enough valid dates to plot timeline.")
 
-# ----------------- PAGE 7: INVESTMENT RECOMMENDATIONS -----------------
 elif page == "7. Investment Recommendations":
     st.title("📝 Investment Recommendations")
-    st.markdown("Final AI-driven rankings and actions for the entire stock universe.")
     
-    filter_rec = st.selectbox("Filter by Recommendation Tier", 
-                              options=['All', 'Strong Buy', 'Buy', 'Hold', 'Reduce', 'Sell'])
-    
+    filter_rec = st.selectbox("Filter", options=['All', 'Strong Buy', 'Buy', 'Hold', 'Reduce', 'Sell'])
     df_display = df_forecast.copy()
     if filter_rec != 'All':
-        df_display = df_display[df_display['Final_Recommendation'] == filter_rec]
+        df_display = df_display[df_display.get('Final_Recommendation') == filter_rec]
         
-    # Formatting for beautiful display
-    display_cols = ['Symbol', 'Final_Recommendation', 'Future_Score', 'Expected_Return', 'Sharpe', 'Forecast_Volatility']
-    
-    st.dataframe(df_display[display_cols].sort_values('Future_Score', ascending=False).style.background_gradient(cmap='Greens', subset=['Future_Score']), 
-                 height=600, use_container_width=True)
+    st.dataframe(df_display, height=500, use_container_width=True)
 
-# ----------------- PAGE 8: EXECUTIVE SUMMARY -----------------
 elif page == "8. Executive Summary":
     st.title("🏆 Executive Summary")
-    st.markdown("Final actionable insights for portfolio managers and stakeholders.")
     
-    best_stock = data['exec'].iloc[0]
-    best_sector = data['sector'].iloc[0] if not data['sector'].empty else None
+    if not data['exec'].empty:
+        best_stock = data['exec'].iloc[0]
+        st.success(f"**Top Recommended Stock:** {best_stock['Symbol']} (Score: {best_stock.get('Future_Score', 0):.2f})")
     
-    st.success(f"**Top Recommended Stock:** {best_stock['Symbol']} with a Future Score of {best_stock['Future_Score']:.2f}")
-    if best_sector is not None:
-        st.info(f"**Top Sector Outlook:** {best_sector['Sector']} (Avg Expected Return: {best_sector['Expected_Return']:.2f}%)")
-        
-    st.markdown("### Top 10 Executive Picks")
     st.dataframe(data['exec'], use_container_width=True)
-    
-    st.markdown("### Project Conclusion")
-    st.markdown("""
-    * **ML Engine:** Successfully predicted returns using LightGBM and XGBoost, outperforming standard technicals.
-    * **Risk Mitigation:** Monte Carlo optimizations ensured balanced portfolios maintaining high Sharpe Ratios.
-    * **Explainability:** All 'Strong Buy' recommendations are backed by transparent data traits, ensuring trust.
-    * **Readiness:** The codebase is robust, modular, and ready for Live Market Trading evaluation.
-    """)
-# Footer
-st.markdown("---")
-st.markdown("<p style='text-align: center; color: grey;'>Built with ♥ for Cult Open Projects 2026 | Machine Learning & Quant Finance Module</p>", unsafe_allow_html=True)
