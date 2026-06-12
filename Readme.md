@@ -400,7 +400,7 @@ pip install lightgbm xgboost scikit-learn shap optuna scipy seaborn matplotlib j
 streamlit run app.py
 ```
 
-The dashboard will open at **http://localhost:8501**
+The dashboard will open at **https://5tfnxejxrhpepbm84gmtcs.streamlit.app/**
 
 All CSV output files are already included in the repository, so the dashboard runs immediately without needing to re-execute the notebooks.
 
