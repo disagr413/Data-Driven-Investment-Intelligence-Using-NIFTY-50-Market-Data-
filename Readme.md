@@ -1,6 +1,6 @@
 # Data-Driven Investment Intelligence Using NIFTY 50 Market Data
 
-**Cult Quant 2026** is an institutional-grade, end-to-end algorithmic investment platform built for the NIFTY 50 equity universe. It bridges the gap between raw market data and actionable portfolio decisions by combining advanced Machine Learning with Modern Portfolio Theory — a framework often called "Quantamental" investing.
+**Cult Quant 2026** is an institutional-grade, end-to-end algorithmic investment platform built for the NIFTY 50 equity universe. It bridges the gap between raw market data and actionable portfolio decisions by combining advanced Machine Learning with Modern Portfolio Theory, a framework often called "Quantamental" investing.
 
 ---
 
