@@ -53,7 +53,7 @@ All results are surfaced through an interactive 8-page Streamlit dashboard.
 
 ### The Dataset
 
-- **Source:** [Kaggle NIFTY50 Stock Market Data](https://www.kaggle.com/datasets/rohanrao/nifty50-stock-market-data) by Rohan Rao
+- **Source:** [Kaggle NIFTY50 Stock Market Data](https://www.kaggle.com/datasets/rohanrao/nifty50-stock-market-data) by Rohan Rao and [Index Datasets](https://www.kaggle.com/datasets/stoicstatic/india-stock-data-nse-1990-2020)
 - **Universe:** All 50 NIFTY 50 constituent stocks
 - **Training Period:** Historical data through end of 2017
 - **Test Period:** January 2018 onwards
@@ -429,9 +429,7 @@ This repository is fully configured for GitHub Codespaces with zero local setup 
 
 | Name | GitHub |
 |---|---|
-| Disha Agrawal | [@disagr413](https://github.com/disagr413) |
-| Ayush Aary | [@ayushaary](https://github.com/ayushaary) |
+| Disha Agrawal 24113039| [@disagr413](https://github.com/disagr413) |
+| Ayush Aary 24113028| [@ayushaary](https://github.com/ayushaary) |
 
 ---
-
-*Built for Cult Open Projects 2026 - Cult Quant Track*
